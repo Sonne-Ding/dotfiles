@@ -1,0 +1,22 @@
+# 设备本地配置
+/.zshrc.local
+/.ssh/
+
+# 私钥与证书
+id_*
+*.key
+*.pem
+
+# 第三方运行时目录（由安装脚本创建）
+/.oh-my-zsh/
+/.vim/
+
+# Shell 与 Vim 生成文件
+.zcompdump*
+*.swp
+*.swo
+*~
+
+# 系统生成文件
+.DS_Store
+Thumbs.db
