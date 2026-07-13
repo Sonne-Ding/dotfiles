@@ -44,9 +44,13 @@ Apple Silicon 默认将 Homebrew 安装到 `/opt/homebrew`，Intel Mac 通常安
 
 1. 在缺失时通过 apt 或 Homebrew 安装 zsh、git 和 `.zshrc` 中 `cp-clean` 所需的 rsync。
 2. 在缺失时浅克隆 oh-my-zsh。
-3. 在缺失时浅克隆 zsh-autocomplete。
+3. 逐个询问是否安装以下可选插件；回答 `yes` 时在 `~/.oh-my-zsh/custom/plugins/` 下浅克隆对应仓库，已存在则跳过：
+   - `zsh-autosuggestions`
+   - `fast-syntax-highlighting`
+   - `zsh-autocomplete`
 4. 备份目标设备已有的 `~/.zshrc`，再复制仓库中的 `.zshrc`。
-5. 将 zsh 设置为默认 shell；macOS 使用 Homebrew zsh 且其路径不在 `/etc/shells` 时，会先通过 sudo 添加该路径。
+5. 将本次选择的插件写入目标设备的 `~/.zshrc` 中 `plugins=(...)` 列表。仓库模板保持 `plugins=()` 为空。
+6. 将 zsh 设置为默认 shell；macOS 使用 Homebrew zsh 且其路径不在 `/etc/shells` 时，会先通过 sudo 添加该路径。
 
 设备专属环境变量应写入 `~/.zshrc.local`。该文件会由 `.zshrc` 加载，但不会被本仓库同步或修改。
 

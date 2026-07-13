@@ -6,6 +6,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SOURCE_ZSHRC="$SCRIPT_DIR/.zshrc"
 BACKUP_DIR="$HOME/.dotfiles-backups/$(date +%Y%m%d-%H%M%S)"
 PLATFORM=''
+SELECTED_PLUGINS=()
 
 log() {
   printf '[zsh] %s\n' "$*"
@@ -14,6 +15,24 @@ log() {
 die() {
   printf '[zsh] error: %s\n' "$*" >&2
   exit 1
+}
+
+ask_yes_no() {
+  local prompt="$1"
+  local answer
+
+  while true; do
+    if ! read -r -p "$prompt [yes/no]: " answer; then
+      printf '\nInput ended; installation aborted.\n' >&2
+      exit 1
+    fi
+
+    case "$answer" in
+      y|Y|yes|YES|Yes) return 0 ;;
+      n|N|no|NO|No) return 1 ;;
+      *) printf 'Please enter yes or no.\n' ;;
+    esac
+  done
 }
 
 detect_platform() {
@@ -105,16 +124,74 @@ install_oh_my_zsh() {
   fi
 }
 
-install_zsh_autocomplete() {
-  local plugin_dir="$HOME/.oh-my-zsh/plugins/zsh-autocomplete"
+ask_and_install_plugins() {
+  local zsh_custom="$HOME/.oh-my-zsh/custom"
+  local -a plugin_defs=(
+    "zsh-autosuggestions|https://github.com/zsh-users/zsh-autosuggestions.git"
+    "fast-syntax-highlighting|https://github.com/zdharma-continuum/fast-syntax-highlighting.git"
+    "zsh-autocomplete|https://github.com/marlonrichert/zsh-autocomplete.git"
+  )
+  local def name repo path
 
-  if [[ -d "$plugin_dir" ]]; then
-    log "zsh-autocomplete is already installed."
+  mkdir -p "$zsh_custom/plugins"
+  SELECTED_PLUGINS=()
+
+  for def in "${plugin_defs[@]}"; do
+    name="${def%%|*}"
+    repo="${def#*|}"
+    path="$zsh_custom/plugins/$name"
+
+    if ask_yes_no "Install $name?"; then
+      if [[ -d "$path" ]]; then
+        log "$name is already installed."
+      else
+        log "Installing $name."
+        git clone --depth 1 -- "$repo" "$path"
+      fi
+      SELECTED_PLUGINS+=("$name")
+    fi
+  done
+}
+
+update_plugins_in_zshrc() {
+  local target_file="$1"
+  shift
+  local -a selected_plugins=("$@")
+  local tmp in_block=false line
+
+  tmp="$(mktemp)"
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    if [[ "$line" == "plugins=(" ]]; then
+      printf 'plugins=(\n' >>"$tmp"
+      for plugin in "${selected_plugins[@]}"; do
+        printf '%s\n' "$plugin" >>"$tmp"
+      done
+      printf ')\n' >>"$tmp"
+      in_block=true
+      continue
+    fi
+
+    if [[ "$in_block" == true && "$line" == ")" ]]; then
+      in_block=false
+      continue
+    fi
+
+    if [[ "$in_block" == false ]]; then
+      printf '%s\n' "$line" >>"$tmp"
+    fi
+  done <"$target_file"
+
+  mv "$tmp" "$target_file"
+}
+
+deploy_config_and_update_plugins() {
+  deploy_config "$SOURCE_ZSHRC" "$HOME/.zshrc"
+  update_plugins_in_zshrc "$HOME/.zshrc" "${SELECTED_PLUGINS[@]}"
+
+  if ((${#SELECTED_PLUGINS[@]} > 0)); then
+    log "Updated plugins in ~/.zshrc: ${SELECTED_PLUGINS[*]}"
   else
-    log "Installing zsh-autocomplete."
-    git clone --depth 1 -- \
-      https://github.com/marlonrichert/zsh-autocomplete.git \
-      "$plugin_dir"
+    log "No optional plugins selected."
   fi
 }
 
@@ -159,8 +236,8 @@ main() {
   detect_platform
   install_dependencies
   install_oh_my_zsh
-  install_zsh_autocomplete
-  deploy_config "$SOURCE_ZSHRC" "$HOME/.zshrc"
+  ask_and_install_plugins
+  deploy_config_and_update_plugins
   set_default_shell
   log "zsh setup complete."
 }

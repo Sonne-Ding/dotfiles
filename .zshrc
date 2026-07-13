@@ -1,6 +1,6 @@
 export ZSH="$HOME/.oh-my-zsh"
-ZSH_THEME="af-magic"
-
+ZSH_THEME="clean"
+# Beautiful Themes: robbyrussell, simple, clean, minimal, ys, refined, fino
 plugins=(
 )
 source ~/.oh-my-zsh/oh-my-zsh.sh
