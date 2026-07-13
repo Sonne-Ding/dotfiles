@@ -10,14 +10,14 @@ ask_yes_no() {
 
   while true; do
     if ! read -r -p "$prompt [yes/no]: " answer; then
-      printf '\n输入已结束，安装中止。\n' >&2
+      printf '\nInput ended; installation aborted.\n' >&2
       exit 1
     fi
 
     case "$answer" in
       y|Y|yes|YES|Yes) return 0 ;;
       n|N|no|NO|No) return 1 ;;
-      *) printf '请输入 yes 或 no。\n' ;;
+      *) printf 'Please enter yes or no.\n' ;;
     esac
   done
 }
@@ -25,20 +25,20 @@ ask_yes_no() {
 main() {
   local configured=false
 
-  if ask_yes_no "是否配置 zsh？"; then
+  if ask_yes_no "Configure zsh?"; then
     bash "$SCRIPT_DIR/zsh-install.sh"
     configured=true
   fi
 
-  if ask_yes_no "是否配置 vim？"; then
+  if ask_yes_no "Configure vim?"; then
     bash "$SCRIPT_DIR/vim-install.sh"
     configured=true
   fi
 
   if [[ "$configured" == true ]]; then
-    printf '所选配置已安装完成。\n'
+    printf 'Selected configurations have been installed.\n'
   else
-    printf '未选择任何配置，未执行安装。\n'
+    printf 'No configuration selected; nothing was installed.\n'
   fi
 }
 

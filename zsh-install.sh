@@ -12,26 +12,26 @@ log() {
 }
 
 die() {
-  printf '[zsh] 错误: %s\n' "$*" >&2
+  printf '[zsh] error: %s\n' "$*" >&2
   exit 1
 }
 
 detect_platform() {
   case "$(uname -s)" in
     Linux)
-      [[ -r /etc/os-release ]] || die "无法识别 Linux 发行版。"
+      [[ -r /etc/os-release ]] || die "Unable to detect Linux distribution."
       # shellcheck disable=SC1091
       source /etc/os-release
       case "${ID:-} ${ID_LIKE:-}" in
         *debian*|*ubuntu*) PLATFORM='linux' ;;
-        *) die "Linux 仅支持 Ubuntu/Debian 系统。" ;;
+        *) die "Linux is only supported on Ubuntu/Debian." ;;
       esac
       ;;
     Darwin)
       PLATFORM='macos'
       ;;
     *)
-      die "仅支持 Ubuntu/Debian 和 macOS。"
+      die "Only Ubuntu/Debian and macOS are supported."
       ;;
   esac
 }
@@ -42,13 +42,13 @@ run_apt() {
   elif command -v sudo >/dev/null 2>&1; then
     sudo apt-get "$@"
   else
-    die "安装系统软件需要 root 权限或 sudo。"
+    die "Installing system packages requires root privileges or sudo."
   fi
 }
 
 run_brew() {
   command -v brew >/dev/null 2>&1 ||
-    die "缺少 Homebrew。请先按照 https://brew.sh/ 的说明手动安装，然后重新运行此脚本。"
+    die "Homebrew is missing. Install it manually from https://brew.sh/, then rerun this script."
   brew install "$@"
 }
 
@@ -60,7 +60,7 @@ install_dependencies() {
   command -v rsync >/dev/null 2>&1 || packages+=(rsync)
 
   if ((${#packages[@]} > 0)); then
-    log "安装依赖: ${packages[*]}"
+    log "Installing dependencies: ${packages[*]}"
     if [[ "$PLATFORM" == 'linux' ]]; then
       run_apt update
       run_apt install -y "${packages[@]}"
@@ -68,7 +68,7 @@ install_dependencies() {
       run_brew "${packages[@]}"
     fi
   else
-    log "系统依赖已安装。"
+    log "System dependencies are already installed."
   fi
 }
 
@@ -78,29 +78,29 @@ deploy_config() {
   local name
   name="$(basename "$target_file")"
 
-  [[ -f "$source_file" ]] || die "仓库配置不存在: $source_file"
+  [[ -f "$source_file" ]] || die "Repository config not found: $source_file"
 
   if [[ -f "$target_file" && ! -L "$target_file" ]] &&
     cmp -s "$source_file" "$target_file"; then
-    log "$name 已是最新版本。"
+    log "$name is already up to date."
     return
   fi
 
   if [[ -e "$target_file" || -L "$target_file" ]]; then
     mkdir -p "$BACKUP_DIR"
     mv "$target_file" "$BACKUP_DIR/$name"
-    log "已备份 $target_file 到 $BACKUP_DIR/$name"
+    log "Backed up $target_file to $BACKUP_DIR/$name"
   fi
 
   install -m 0644 "$source_file" "$target_file"
-  log "已复制 $name 到 $target_file"
+  log "Copied $name to $target_file"
 }
 
 install_oh_my_zsh() {
   if [[ -d "$HOME/.oh-my-zsh" ]]; then
-    log "oh-my-zsh 已安装。"
+    log "oh-my-zsh is already installed."
   else
-    log "安装 oh-my-zsh。"
+    log "Installing oh-my-zsh."
     git clone --depth 1 https://github.com/ohmyzsh/ohmyzsh.git "$HOME/.oh-my-zsh"
   fi
 }
@@ -109,9 +109,9 @@ install_zsh_autocomplete() {
   local plugin_dir="$HOME/.oh-my-zsh/plugins/zsh-autocomplete"
 
   if [[ -d "$plugin_dir" ]]; then
-    log "zsh-autocomplete 已安装。"
+    log "zsh-autocomplete is already installed."
   else
-    log "安装 zsh-autocomplete。"
+    log "Installing zsh-autocomplete."
     git clone --depth 1 -- \
       https://github.com/marlonrichert/zsh-autocomplete.git \
       "$plugin_dir"
@@ -134,25 +134,25 @@ set_default_shell() {
   fi
 
   if [[ "$current_shell" == "$zsh_path" ]]; then
-    log "zsh 已是默认 shell。"
+    log "zsh is already the default shell."
     return
   fi
 
   if [[ "$PLATFORM" == 'macos' ]] &&
     ! grep -Fqx "$zsh_path" /etc/shells; then
-    log "将 $zsh_path 添加到 /etc/shells。"
+    log "Adding $zsh_path to /etc/shells."
     if [[ "$(id -u)" -eq 0 ]]; then
       printf '%s\n' "$zsh_path" >>/etc/shells
     elif command -v sudo >/dev/null 2>&1; then
       printf '%s\n' "$zsh_path" | sudo tee -a /etc/shells >/dev/null
     else
-      die "修改 /etc/shells 需要 root 权限或 sudo。"
+      die "Updating /etc/shells requires root privileges or sudo."
     fi
   fi
 
-  log "将 $current_user 的默认 shell 设置为 $zsh_path。"
+  log "Setting default shell for $current_user to $zsh_path."
   chsh -s "$zsh_path" "$current_user" ||
-    die "无法修改默认 shell，请手动执行: chsh -s $zsh_path"
+    die "Unable to change default shell. Run manually: chsh -s $zsh_path"
 }
 
 main() {
@@ -162,7 +162,7 @@ main() {
   install_zsh_autocomplete
   deploy_config "$SOURCE_ZSHRC" "$HOME/.zshrc"
   set_default_shell
-  log "zsh 配置完成。"
+  log "zsh setup complete."
 }
 
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
