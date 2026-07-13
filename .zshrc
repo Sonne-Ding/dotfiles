@@ -2,15 +2,13 @@ export ZSH="$HOME/.oh-my-zsh"
 ZSH_THEME="af-magic"
 
 plugins=(
-zsh-autocomplete	
 )
 source ~/.oh-my-zsh/oh-my-zsh.sh
-zstyle -e ':autocomplete:*:*' list-lines 'reply=( 8 )'
 
 # Setting environment variables
 [ -f ~/.zshrc.local ] && source ~/.zshrc.local
 
-alias cp-clean='rsync -avh \
+alias cp-clean='rsync -avhP \
   --exclude=".DS_Store" \
   --exclude="._*" \
   --exclude=".Spotlight-*" \
