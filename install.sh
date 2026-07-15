@@ -35,6 +35,11 @@ main() {
     configured=true
   fi
 
+  if ask_yes_no "Configure nvim?"; then
+    bash "$SCRIPT_DIR/nvim-install.sh"
+    configured=true
+  fi
+
   if [[ "$configured" == true ]]; then
     printf 'Selected configurations have been installed.\n'
   else

@@ -1,6 +1,8 @@
 export ZSH="$HOME/.oh-my-zsh"
 ZSH_THEME="clean"
-# Beautiful Themes: robbyrussell, simple, clean, minimal, ys, refined, fino
+# simple: clean, simple, robbyrussell
+# folder on top: refined, 
+# user@machine: bira, ys, 
 plugins=(
 )
 source ~/.oh-my-zsh/oh-my-zsh.sh
